@@ -107,3 +107,22 @@ def calculate_contract_value(
         last_date = date
 
     return float(contract_value)
+
+
+def price_storage_contract(
+    injection_dates: Sequence,
+    withdrawal_dates: Sequence,
+    prices: PriceLookup,
+    rate: float,
+    max_volume: float,
+    storage_cost: float,
+) -> float:
+    """Return the total value of a gas storage contract (Task 2 deliverable)."""
+    return calculate_contract_value(
+        injection_dates=injection_dates,
+        withdrawal_dates=withdrawal_dates,
+        prices=prices,
+        rate=rate,
+        max_volume=max_volume,
+        storage_cost=storage_cost,
+    )
