@@ -100,3 +100,20 @@ def get_model() -> NaturalGasPriceModel:
         data = load_data()
         _model = NaturalGasPriceModel().fit(data["date"], data["price"])
     return _model
+
+
+def get_price_estimate(date) -> float:
+    """
+    Estimate the natural gas purchase price for a given date.
+
+    Parameters
+    ----------
+    date : str, datetime, or pd.Timestamp
+        Any date from Oct 2020 through Sep 2025 (1 year beyond the data).
+
+    Returns
+    -------
+    float
+        Estimated price in dollars.
+    """
+    return get_model().estimate(pd.Timestamp(date))
