@@ -65,6 +65,7 @@ def _segment_log_likelihood(counts: np.ndarray, defaults: np.ndarray, start: int
     p = np.clip(k / n, EPS, 1 - EPS)
     return float(k * np.log(p) + (n - k) * np.log(1 - p))
 
+
 def _optimal_partition(
     grouped: pd.DataFrame,
     num_buckets: int,
@@ -148,3 +149,39 @@ def generate_log_likelihood_buckets(
     )
 
 
+def get_rating_map(method: str = "log_likelihood", num_buckets: int = DEFAULT_NUM_BUCKETS) -> BucketResult:
+    global _rating_map
+    if _rating_map is None or _rating_map.method != method or _rating_map.num_buckets != num_buckets:
+        _rating_map = (
+            generate_mse_buckets(num_buckets)
+            if method == "mse"
+            else generate_log_likelihood_buckets(num_buckets)
+        )
+    return _rating_map
+
+
+def map_rating(
+    fico_score: float,
+    num_buckets: int = DEFAULT_NUM_BUCKETS,
+    method: str = "log_likelihood",
+) -> int:
+    """
+    Map a FICO score to a credit rating (1 = best, num_buckets = worst).
+    """
+    return get_rating_map(method=method, num_buckets=num_buckets).rating_for_fico(float(fico_score))
+
+
+def bucket_summary(df: pd.DataFrame, bucket_result: BucketResult) -> pd.DataFrame:
+    ratings = df["fico_score"].apply(bucket_result.rating_for_fico)
+    return (
+        df.assign(rating=ratings)
+        .groupby("rating")
+        .agg(
+            count=("fico_score", "count"),
+            fico_min=("fico_score", "min"),
+            fico_max=("fico_score", "max"),
+            default_rate=("default", "mean"),
+        )
+        .sort_index()
+        .reset_index()
+    )
