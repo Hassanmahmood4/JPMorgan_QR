@@ -8,8 +8,8 @@ Natural gas pricing and storage contract valuation for the JPMorgan Chase quanti
 |---|---|
 | [`task_1.ipynb`](task_1.ipynb) | Estimate natural gas prices for any date (interpolation + 1-year forecast) |
 | [`task_2.ipynb`](task_2.ipynb) | Price a gas storage contract from injection/withdrawal schedules |
-
 | [`task_3.ipynb`](task_3.ipynb) | Predict loan default probability and calculate expected loss |
+| [`task_4.ipynb`](task_4.ipynb) | Quantize FICO scores into credit ratings (MSE & log-likelihood) |
 
 ## Project Structure
 
@@ -21,6 +21,8 @@ Natural gas pricing and storage contract valuation for the JPMorgan Chase quanti
 | `natural_gas_model.py` | Trend + seasonality price model (Task 1) |
 | `storage_contract.py` | Contract cash-flow valuation (Task 2) |
 | `loan_risk_model.py` | PD model and `calculate_expected_loss()` (Task 3) |
+| `task_4.ipynb` | Task 4 — FICO quantization, rating map, `map_rating()` |
+| `fico_quantization.py` | MSE and log-likelihood bucket optimization (Task 4) |
 | `Natural Gas Data.csv` | Monthly natural gas prices (Oct 2020 – Sep 2024) |
 | `Task 3 and 4 Loan Data.csv` | Borrower/loan data for default modeling (Task 3) |
 | `requirements.txt` | Python dependencies |
@@ -33,12 +35,13 @@ cd JPMorgan_QR
 python3 -m pip install -r requirements.txt
 ```
 
-Run either notebook:
+Run any notebook:
 
 ```bash
 python3 -m jupyter notebook task_1.ipynb
 python3 -m jupyter notebook task_2.ipynb
 python3 -m jupyter notebook task_3.ipynb
+python3 -m jupyter notebook task_4.ipynb
 ```
 
 ## Task 1 — Price Estimation
@@ -124,6 +127,25 @@ el = calculate_expected_loss(loan)
 ```
 
 **Models compared:** Logistic Regression, Decision Tree, Random Forest.
+
+## Task 4 — FICO Rating Map
+
+**Run:** `task_4.ipynb` → Section 8
+
+**Goal:** Quantize FICO scores into ratings where **1 = best credit** (highest FICO bucket).
+
+**Methods (dynamic programming):**
+- **MSE** — minimize within-bucket squared error
+- **Log-likelihood** — maximize fit to default distribution per bucket
+
+**Programmatic:**
+
+```python
+from fico_quantization import map_rating, generate_mse_buckets
+
+rating = map_rating(720)  # 1 = best, 10 = worst
+buckets = generate_mse_buckets(num_buckets=10)
+```
 
 ## Requirements
 
