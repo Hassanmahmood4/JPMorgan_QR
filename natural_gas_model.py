@@ -84,3 +84,19 @@ class NaturalGasPriceModel:
             return float(p0 + weight * (p1 - p0))
 
         return float(self._raw_estimate(date))
+
+
+def load_data() -> pd.DataFrame:
+    df = pd.read_csv(DATA_PATH)
+    df.columns = ["date", "price"]
+    df["date"] = pd.to_datetime(df["date"], format="%m/%d/%y")
+    df["price"] = pd.to_numeric(df["price"], errors="coerce")
+    return df.sort_values("date").reset_index(drop=True)
+
+
+def get_model() -> NaturalGasPriceModel:
+    global _model
+    if _model is None:
+        data = load_data()
+        _model = NaturalGasPriceModel().fit(data["date"], data["price"])
+    return _model
