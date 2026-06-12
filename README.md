@@ -9,15 +9,20 @@ Natural gas pricing and storage contract valuation for the JPMorgan Chase quanti
 | [`task_1.ipynb`](task_1.ipynb) | Estimate natural gas prices for any date (interpolation + 1-year forecast) |
 | [`task_2.ipynb`](task_2.ipynb) | Price a gas storage contract from injection/withdrawal schedules |
 
+| [`task_3.ipynb`](task_3.ipynb) | Predict loan default probability and calculate expected loss |
+
 ## Project Structure
 
 | File | Description |
 |---|---|
 | `task_1.ipynb` | Task 1 — EDA, seasonal analysis, `get_price_estimate()` |
 | `task_2.ipynb` | Task 2 — storage contract model, tests, interactive input |
+| `task_3.ipynb` | Task 3 — loan default model, expected loss, interactive input |
 | `natural_gas_model.py` | Trend + seasonality price model (Task 1) |
 | `storage_contract.py` | Contract cash-flow valuation (Task 2) |
+| `loan_risk_model.py` | PD model and `calculate_expected_loss()` (Task 3) |
 | `Natural Gas Data.csv` | Monthly natural gas prices (Oct 2020 – Sep 2024) |
+| `Task 3 and 4 Loan Data.csv` | Borrower/loan data for default modeling (Task 3) |
 | `requirements.txt` | Python dependencies |
 
 ## Setup
@@ -33,6 +38,7 @@ Run either notebook:
 ```bash
 python3 -m jupyter notebook task_1.ipynb
 python3 -m jupyter notebook task_2.ipynb
+python3 -m jupyter notebook task_3.ipynb
 ```
 
 ## Task 1 — Price Estimation
@@ -91,7 +97,35 @@ value = price_storage_contract(
 
 **Assumptions:** instant transport, zero interest rates, no holiday adjustments.
 
+## Task 3 — Loan Default & Expected Loss
+
+**Run:** `task_3.ipynb` → Section 8
+
+**Goal:** Predict probability of default (PD), then calculate expected loss with a **10% recovery rate**.
+
+$$\text{Expected Loss} = PD \times \text{Loan Amount Outstanding} \times 0.90$$
+
+**Programmatic:**
+
+```python
+from loan_risk_model import calculate_expected_loss, get_probability_of_default
+
+loan = {
+    "credit_lines_outstanding": 1,
+    "loan_amt_outstanding": 5000,
+    "total_debt_outstanding": 8000,
+    "income": 60000,
+    "years_employed": 4,
+    "fico_score": 650,
+}
+
+pd = get_probability_of_default(loan)
+el = calculate_expected_loss(loan)
+```
+
+**Models compared:** Logistic Regression, Decision Tree, Random Forest.
+
 ## Requirements
 
 - Python 3.10+
-- pandas, numpy, matplotlib, jupyter
+- pandas, numpy, matplotlib, scikit-learn, jupyter
