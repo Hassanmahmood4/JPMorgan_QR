@@ -65,3 +65,57 @@ def _segment_log_likelihood(counts: np.ndarray, defaults: np.ndarray, start: int
     p = np.clip(k / n, EPS, 1 - EPS)
     return float(k * np.log(p) + (n - k) * np.log(1 - p))
 
+def _optimal_partition(
+    grouped: pd.DataFrame,
+    num_buckets: int,
+    objective: Literal["mse", "log_likelihood"],
+) -> tuple[list[float], float]:
+    scores = grouped["fico_score"].to_numpy()
+    counts = grouped["count"].to_numpy()
+    defaults = grouped["defaults"].to_numpy()
+    m = len(scores)
+
+    if num_buckets < 1:
+        raise ValueError("num_buckets must be at least 1")
+    if num_buckets > m:
+        raise ValueError("num_buckets cannot exceed number of unique FICO scores")
+
+    seg_cost = np.zeros((m, m))
+    for i in range(m):
+        for j in range(i, m):
+            if objective == "mse":
+                seg_cost[i, j] = _segment_mse(scores, counts, i, j + 1)
+            else:
+                seg_cost[i, j] = _segment_log_likelihood(counts, defaults, i, j + 1)
+
+    neg_inf = -np.inf
+    pos_inf = np.inf
+    dp = np.full((m + 1, num_buckets + 1), pos_inf if objective == "mse" else neg_inf)
+    split = np.zeros((m + 1, num_buckets + 1), dtype=int)
+    dp[0, 0] = 0.0
+
+    for b in range(1, num_buckets + 1):
+        for i in range(b, m + 1):
+            for j in range(b - 1, i):
+                cost = dp[j, b - 1] + seg_cost[j, i - 1]
+                if objective == "mse":
+                    if cost < dp[i, b]:
+                        dp[i, b] = cost
+                        split[i, b] = j
+                else:
+                    if cost > dp[i, b]:
+                        dp[i, b] = cost
+                        split[i, b] = j
+
+    boundary_indices: list[int] = []
+    i, b = m, num_buckets
+    while b > 0:
+        j = int(split[i, b])
+        if j > 0:
+            boundary_indices.append(j - 1)
+        i, b = j, b - 1
+
+    boundaries = sorted({float(scores[idx]) for idx in boundary_indices})
+    return boundaries, float(dp[m, num_buckets])
+
+
