@@ -58,3 +58,21 @@ def _prepare_features(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values("roc_auc", ascending=False).reset_index(drop=True)
 
 
+
+class LoanRiskModel:
+    def __init__(self, model=None):
+        self.model = model or LogisticRegression(max_iter=1000, random_state=42)
+        self.recovery_rate = RECOVERY_RATE
+
+    def fit(self, df: pd.DataFrame) -> "LoanRiskModel":
+        self.model.fit(_prepare_features(df), df["default"])
+        return self
+
+    def predict_pd(self, loan: Union[Mapping, pd.Series, pd.DataFrame]) -> float:
+        frame = loan[FEATURE_COLUMNS] if isinstance(loan, pd.DataFrame) else pd.DataFrame([pd.Series(loan)])[FEATURE_COLUMNS]
+        return float(self.model.predict_proba(frame)[0, 1])
+
+    def expected_loss(self, loan: Union[Mapping, pd.Series, pd.DataFrame]) -> float:
+        s = loan if isinstance(loan, pd.Series) else pd.Series(loan)
+        return float(self.predict_pd(s) * float(s["loan_amt_outstanding"]) * (1.0 - self.recovery_rate))
+
