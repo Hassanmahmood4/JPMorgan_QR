@@ -119,3 +119,32 @@ def _optimal_partition(
     return boundaries, float(dp[m, num_buckets])
 
 
+def generate_mse_buckets(
+    num_buckets: int = DEFAULT_NUM_BUCKETS,
+    df: pd.DataFrame | None = None,
+) -> BucketResult:
+    """Find bucket boundaries that minimize mean squared error."""
+    if df is None:
+        df = load_data()
+    grouped = _aggregate_fico(df)
+    boundaries, mse = _optimal_partition(grouped, num_buckets, "mse")
+    return BucketResult(method="mse", num_buckets=num_buckets, boundaries=boundaries, mse=mse)
+
+
+def generate_log_likelihood_buckets(
+    num_buckets: int = DEFAULT_NUM_BUCKETS,
+    df: pd.DataFrame | None = None,
+) -> BucketResult:
+    """Find bucket boundaries that maximize log-likelihood of defaults."""
+    if df is None:
+        df = load_data()
+    grouped = _aggregate_fico(df)
+    boundaries, log_likelihood = _optimal_partition(grouped, num_buckets, "log_likelihood")
+    return BucketResult(
+        method="log_likelihood",
+        num_buckets=num_buckets,
+        boundaries=boundaries,
+        log_likelihood=log_likelihood,
+    )
+
+
